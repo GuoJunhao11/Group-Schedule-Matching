@@ -20,6 +20,6 @@ This program determines common available meeting slots for multiple participants
 ## How to Run the Program
 1. Ensure **Python 3.x** is installed on your system.
 2. Place `input.txt` in the same directory as `main.py`.
-3. Open a terminal or command prompt, navigate to the directory containing `main.py`, and execute the following command:
+3. Open a terminal or command prompt, navigate to the directory containing `Project2_starter.py`, and execute the following command:
    ```bash
    python main.py
