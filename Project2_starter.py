@@ -66,7 +66,7 @@ def find_available_meeting_slots(busy_schedules, working_periods, meeting_durati
                            for start, end in common_free_times if (end - start) >= meeting_duration]
     return valid_meeting_times
 
-def read_input(filename="input.txt"):
+def read_input(filename="input.txt "):
     test_cases = []
     with open(filename, "r") as file:
         busy_schedules, working_periods, meeting_duration = [], [], None
