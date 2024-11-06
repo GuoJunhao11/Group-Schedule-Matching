@@ -2,22 +2,27 @@ import ast
 from datetime import datetime
 
 def time_to_minutes(time_str):
-    time_obj = datetime.strptime(time_str, "%H:%M")
-    return time_obj.hour * 60 + time_obj.minute
+    # Convert "HH:MM" time format to total minutes for easier calculations
+    try:
+        time_obj = datetime.strptime(time_str, "%H:%M")
+        return time_obj.hour * 60 + time_obj.minute
+    except ValueError:
+        raise ValueError(f"Time format error with '{time_str}'. Ensure it's in HH:MM format.")
 
 def minutes_to_time(minutes):
+    # Convert minutes back to "HH:MM" format for readable output
     hours = minutes // 60
     minutes = minutes % 60
     return f"{hours:02}:{minutes:02}"
 
 def merge_intervals(intervals):
-    intervals.sort(key=lambda x: x[0])  # Sort intervals by start time
+    intervals.sort(key=lambda x: x[0])
     merged = []
     for start, end in intervals:
         if not merged or merged[-1][1] < start:
-            merged.append([start, end])  # No overlap
+            merged.append([start, end])
         else:
-            merged[-1][1] = max(merged[-1][1], end)  # Merge
+            merged[-1][1] = max(merged[-1][1], end)
     return merged
 
 def get_free_times(busy_intervals, working_period):
@@ -26,26 +31,22 @@ def get_free_times(busy_intervals, working_period):
     merged_busy = merge_intervals(busy_intervals)
 
     free_times = []
-    # Check for free time before the first busy interval
     if login < merged_busy[0][0]:
         free_times.append([login, merged_busy[0][0]])
-    
-    # Check for free time between busy intervals
     for i in range(1, len(merged_busy)):
-        free_times.append([merged_busy[i-1][1], merged_busy[i][0]])
-    
-    # Check for free time after the last busy interval
+        if merged_busy[i-1][1] < merged_busy[i][0]:
+            free_times.append([merged_busy[i-1][1], merged_busy[i][0]])
     if merged_busy[-1][1] < logout:
         free_times.append([merged_busy[-1][1], logout])
-    
     return free_times
 
 def intersect_intervals(all_free_times):
+    if not all_free_times:
+        return []
     common_intervals = all_free_times[0]
     for free_times in all_free_times[1:]:
         temp_intersection = []
         i, j = 0, 0
-        # Merge all_free_times into valid common_intervals using two pointer
         while i < len(common_intervals) and j < len(free_times):
             start = max(common_intervals[i][0], free_times[j][0])
             end = min(common_intervals[i][1], free_times[j][1])
@@ -59,54 +60,45 @@ def intersect_intervals(all_free_times):
     return common_intervals
 
 def find_available_meeting_slots(busy_schedules, working_periods, meeting_duration):
-    all_free_times = []
-    # Append free time ranges in mutes for each person to all_free_times
-    for i in range(len(busy_schedules)):
-        busy_intervals = busy_schedules[i]
-        working_period = working_periods[i]
-        free_times = get_free_times(busy_intervals, working_period)
-        all_free_times.append(free_times)
-
+    all_free_times = [get_free_times(busy, work) for busy, work in zip(busy_schedules, working_periods)]
     common_free_times = intersect_intervals(all_free_times)
+    valid_meeting_times = [[minutes_to_time(start), minutes_to_time(end)] 
+                           for start, end in common_free_times if (end - start) >= meeting_duration]
+    return valid_meeting_times
 
-    # Filter by meeting duration
-    available_meeting_times = []
-    for start, end in common_free_times:
-        if end - start >= meeting_duration:
-            available_meeting_times.append([minutes_to_time(start), minutes_to_time(end)])
-
-    return available_meeting_times
-
-def read_input():
-    with open("input.txt", "r") as file:
-        busy_schedules = []
-        working_periods = []
-        
-        # Read until we reach the last line for meeting duration
-        while True:
-            line = file.readline().strip()
-            if not line:
-                break
+def read_input(filename="input.txt"):
+    test_cases = []
+    with open(filename, "r") as file:
+        busy_schedules, working_periods, meeting_duration = [], [], None
+        for line in file:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
             if line.isdigit():
-                meeting_duration = int(line)  # This is the meeting duration
-                break
-            busy_schedule = ast.literal_eval(line)
-            busy_schedules.append(busy_schedule)  # Collect busy schedules
-            
-            working_period = ast.literal_eval(file.readline().strip())
-            working_periods.append(working_period)  # Collect working periods
-            
-    return busy_schedules, working_periods, meeting_duration
+                meeting_duration = int(line)
+                test_cases.append((busy_schedules, working_periods, meeting_duration))
+                busy_schedules, working_periods = [], []
+            else:
+                data = ast.literal_eval(line)
+                if isinstance(data[0], list):
+                    busy_schedules.append(data)
+                else:
+                    working_periods.append(data)
+    return test_cases
 
-def write_output(available_slots):
-    with open("output.txt", "w") as file:
-        file.write(str(available_slots))
+def write_output(all_available_slots, filename="output.txt"):
+    with open(filename, "w") as file:
+        for i, slots in enumerate(all_available_slots, start=1):
+            file.write(f"Test Case {i}:\n")
+            for slot in slots:
+                file.write(f"{slot}\n")
+            file.write("\n")
 
 def main():
-    busy_schedules, working_periods, meeting_duration = read_input()
-    available_slots = find_available_meeting_slots(busy_schedules, working_periods, meeting_duration)
-    write_output(available_slots)
-    print("Available meeting slots written to output.exe")
+    test_cases = read_input()
+    all_available_slots = [find_available_meeting_slots(*case) for case in test_cases]
+    write_output(all_available_slots)
+    print("Available meeting slots for each test case written in 'output.txt'")
 
 if __name__ == "__main__":
     main()
