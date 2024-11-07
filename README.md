@@ -7,7 +7,7 @@
 - **Name:** Joshua Lopez
   **Email:** Jlopez0627@csu.fullerton.edu
 - **Name:** Sepehr Nourbakhsh
-  **Email:** nourbakhshsepehr@gmail.com
+  **Email:** sepehrnour@csu.fullerton.edu
 
 ## Project Overview
 This program determines common available meeting slots for multiple participants based on their busy schedules, working periods, and a required meeting duration. The program reads input data from `input.txt`, processes it, and writes the available meeting times to `output.txt`.
